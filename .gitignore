@@ -1,0 +1,10 @@
+.idea/
+.venv/
+__pycache__/
+*.pyc
+localtunnel.log
+localtunnel.err.log
+http-server.log
+http-server.err.log
+main.py
+erasylbooksandelmira.py
