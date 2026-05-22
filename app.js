@@ -29,7 +29,7 @@ const LEVELS = [
 const LOCAL_BOOKS_KEY = "english-books-market-books";
 const LOCAL_SELLER_KEY = "english-books-market-seller";
 const LOCAL_DATA_VERSION_KEY = "english-books-market-version";
-const LOCAL_DATA_VERSION = "2";
+const LOCAL_DATA_VERSION = "3";
 const THEME_KEY = "english-books-market-theme";
 const ADMIN_SESSION_KEY = "english-books-market-admin-session";
 const ADMIN_ACCESS_CODE = "elmira-books-2026";
@@ -43,14 +43,15 @@ const sellerDefaults = {
 const seededBooks = [
   {
     id: "beginner-book",
-    title: "Beginner",
+    title: "Face2Face",
     shortDescription: "Учебная книга для начинающих с базовыми словами, чтением и простыми упражнениями.",
     fullDescription:
       "Книга для уровня Beginner. Подходит для первых шагов в английском: алфавит, простые слова, короткие тексты и задания для закрепления.",
     level: "Beginner",
     price: 4500,
     tags: ["Book", "Beginner", "English"],
-    accent: "#2563eb"
+    accent: "#2563eb",
+    image: "./images/beginner-book.png"
   },
   {
     id: "elementary-book",
@@ -61,7 +62,8 @@ const seededBooks = [
     level: "Elementary",
     price: 4500,
     tags: ["Book", "Elementary", "Grammar"],
-    accent: "#1d4ed8"
+    accent: "#1d4ed8",
+    image: "./images/elementary-book.png"
   },
   {
     id: "pre-intermediate-book",
@@ -72,7 +74,8 @@ const seededBooks = [
     level: "Pre-Intermediate",
     price: 4500,
     tags: ["Book", "Pre-Intermediate", "English"],
-    accent: "#0f172a"
+    accent: "#0f172a",
+    image: "./images/pre-intermediate-book.png"
   },
   {
     id: "intermediate-book",
@@ -83,7 +86,8 @@ const seededBooks = [
     level: "Intermediate",
     price: 4500,
     tags: ["Book", "Intermediate", "Reading"],
-    accent: "#1e40af"
+    accent: "#1e40af",
+    image: "./images/intermediate-book.png"
   },
   {
     id: "upper-intermediate-book",
@@ -94,7 +98,8 @@ const seededBooks = [
     level: "Upper-Intermediate",
     price: 4500,
     tags: ["Book", "Upper-Intermediate", "English"],
-    accent: "#3b82f6"
+    accent: "#3b82f6",
+    image: "./images/upper-intermediate-book.png"
   }
 ];
 
