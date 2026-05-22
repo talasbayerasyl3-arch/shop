@@ -31,6 +31,8 @@ const LOCAL_SELLER_KEY = "english-books-market-seller";
 const LOCAL_DATA_VERSION_KEY = "english-books-market-version";
 const LOCAL_DATA_VERSION = "2";
 const THEME_KEY = "english-books-market-theme";
+const ADMIN_SESSION_KEY = "english-books-market-admin-session";
+const ADMIN_ACCESS_CODE = "elmira-books-2026";
 
 const sellerDefaults = {
   phone: "87471030889",
@@ -108,7 +110,8 @@ const state = {
   notice: "",
   dataMode: "demo",
   loading: true,
-  saving: false
+  saving: false,
+  adminUnlocked: hasAdminSession()
 };
 
 let db = null;
@@ -131,10 +134,36 @@ function getRoute() {
   if (parts[0] === "book" && parts[1]) {
     return { page: "book", bookId: decodeURIComponent(parts[1]) };
   }
-  if (parts[0] === "admin") {
+  if (parts[0] === "admin" || parts[0] === "manage") {
     return { page: "admin" };
   }
   return { page: "catalog" };
+}
+
+function hasAdminSession() {
+  return localStorage.getItem(ADMIN_SESSION_KEY) === "unlocked";
+}
+
+function unlockAdminSession() {
+  localStorage.setItem(ADMIN_SESSION_KEY, "unlocked");
+  state.adminUnlocked = true;
+}
+
+function lockAdminSession() {
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+  state.adminUnlocked = false;
+  state.editingBookId = null;
+}
+
+function ensureAdminAccess() {
+  if (state.adminUnlocked) {
+    return true;
+  }
+
+  setNotice("Доступ к управлению закрыт.");
+  state.route = { page: "catalog" };
+  window.location.hash = "#/";
+  return false;
 }
 
 function isFirebaseReady() {
@@ -427,7 +456,6 @@ function renderHeader() {
       </a>
       <nav class="header-nav" aria-label="Основная навигация">
         <a class="nav-link" href="#/">Каталог</a>
-        <a class="nav-link" href="#/admin">Админ-панель</a>
       </nav>
       <div class="header-actions">
         <button class="theme-toggle" type="button" data-action="toggle-theme">
@@ -628,6 +656,10 @@ function renderBookPage(bookId) {
 }
 
 function renderAdminPage() {
+  if (!state.adminUnlocked) {
+    return renderAdminAccessPage();
+  }
+
   const editingBook = state.books.find((book) => book.id === state.editingBookId);
   const sellerTelegram = state.seller.telegram || "";
 
@@ -643,6 +675,10 @@ function renderAdminPage() {
             Добавляйте книги, меняйте контакты продавца и загружайте обложки.
             В демо-режиме данные сохраняются локально в браузере.
           </p>
+        </div>
+
+        <div class="inline-toolbar">
+          <button class="ghost-button" type="button" data-action="lock-admin">Выйти из управления</button>
         </div>
 
         <form id="book-form" class="form-grid">
@@ -758,6 +794,34 @@ function renderAdminPage() {
   `;
 }
 
+function renderAdminAccessPage() {
+  return `
+    <section class="empty-state">
+      <h1>Закрытое управление</h1>
+      <p class="muted" style="max-width: 520px; margin: 0 auto 18px;">
+        Публичная ссылка на админку убрана. Для входа используйте код доступа.
+      </p>
+      <form id="admin-access-form" class="form-grid" style="max-width: 440px; margin: 0 auto;">
+        <div class="field-stack full-span">
+          <label for="admin-code">Код доступа</label>
+          <input
+            id="admin-code"
+            class="text-field"
+            type="password"
+            name="accessCode"
+            placeholder="Введите код"
+            autocomplete="off"
+            required
+          >
+        </div>
+        <div class="field-stack full-span">
+          <button class="primary-button" type="submit">Открыть управление</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
 function renderLoading() {
   return `
     <section class="empty-state">
@@ -833,6 +897,13 @@ function bindUI() {
     setTheme(state.theme === "dark" ? "light" : "dark");
   });
 
+  document.querySelector("#admin-access-form")?.addEventListener("submit", handleAdminAccessSubmit);
+  document.querySelector('[data-action="lock-admin"]')?.addEventListener("click", () => {
+    lockAdminSession();
+    window.location.hash = "#/";
+    render();
+  });
+
   document.querySelector('[data-field="search"]')?.addEventListener("input", (event) => {
     state.search = event.target.value;
     render();
@@ -902,6 +973,9 @@ function bindUI() {
 
 async function handleBookSubmit(event) {
   event.preventDefault();
+  if (!ensureAdminAccess()) {
+    return;
+  }
   const form = event.currentTarget;
   const formData = new FormData(form);
   state.saving = true;
@@ -960,6 +1034,9 @@ async function handleBookSubmit(event) {
 
 async function handleSellerSubmit(event) {
   event.preventDefault();
+  if (!ensureAdminAccess()) {
+    return;
+  }
   const formData = new FormData(event.currentTarget);
   const seller = {
     phone: String(formData.get("phone") || "").trim(),
@@ -983,6 +1060,10 @@ async function handleSellerSubmit(event) {
 }
 
 async function deleteBook(bookId) {
+  if (!ensureAdminAccess()) {
+    return;
+  }
+
   try {
     if (state.dataMode === "firebase") {
       await deleteDoc(doc(db, firebaseCollections.books, bookId));
@@ -1026,6 +1107,21 @@ function fileToDataUrl(file) {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+function handleAdminAccessSubmit(event) {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const accessCode = String(formData.get("accessCode") || "").trim();
+
+  if (accessCode !== ADMIN_ACCESS_CODE) {
+    setNotice("Неверный код доступа.");
+    return;
+  }
+
+  unlockAdminSession();
+  setNotice("Управление открыто.");
+  render();
 }
 
 window.addEventListener("hashchange", () => {
